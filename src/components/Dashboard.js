@@ -1,11 +1,29 @@
-import React, { useEffect, useState } from "react";
-import "./Dashboard.css"; // Import the CSS file
+import React, { useEffect, useState, useRef } from "react";
+import {
+  GoogleMap,
+  LoadScript,
+  DrawingManagerF,
+  Polyline,
+} from "@react-google-maps/api";
+import "./Dashboard.css";
+
+const mapContainerStyle = {
+  width: "100%",
+  height: "400px",
+};
+
+const center = {
+  lat: 43.6532, // Example latitude (Toronto)
+  lng: -79.3832, // Example longitude (Toronto)
+};
 
 function Dashboard({ setUserId, userId }) {
   const [username, setUsername] = useState("");
   const [routeIds, setRouteIds] = useState([]);
   const [routeNames, setRouteNames] = useState([]);
   const [selectedRoute, setSelectedRoute] = useState("");
+  const [isDrawing, setIsDrawing] = useState(false);
+  const drawingManagerRef = useRef(null); // Use a ref to store the DrawingManager
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -38,6 +56,17 @@ function Dashboard({ setUserId, userId }) {
     setSelectedRoute(event.target.value);
   };
 
+  const onPolylineComplete = (polyline) => {
+    const path = polyline.getPath().getArray();
+    console.log("Polyline complete:", path);
+    // You can do something with the drawn route here
+  };
+
+  const handleLoad = (drawingManager) => {
+    drawingManagerRef.current = drawingManager; // Store the DrawingManager instance when loaded
+    console.log(drawingManager);
+  };
+
   return (
     <div className="dashboard-container">
       <header className="dashboard-header">
@@ -67,8 +96,42 @@ function Dashboard({ setUserId, userId }) {
           Logout
         </button>
       </header>
+
       <main className="dashboard-content">
-        <h2>Dashboard</h2>
+        <div className="dashboard-button-container">
+          <button
+            className={`${isDrawing ? "is-drawing" : ""}`}
+            onClick={() => setIsDrawing(!isDrawing)}
+          >
+            {isDrawing ? "Stop" : "Start"} Drawing
+          </button>
+        </div>
+        <LoadScript
+          googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}
+          libraries={["drawing"]}
+        >
+          <GoogleMap
+            mapContainerStyle={mapContainerStyle}
+            center={center}
+            zoom={12}
+          >
+            <DrawingManagerF
+              onLoad={handleLoad} // Store the DrawingManager instance
+              drawingMode={!isDrawing ? "polyline" : null} // Use a string for drawingMode directly
+              onPolylineComplete={onPolylineComplete}
+              options={{
+                drawingControl: true,
+                drawingControlOptions: {
+                  drawingModes: ["polyline"], // Enable only polyline drawing
+                },
+                polylineOptions: {
+                  strokeColor: "#FF0000",
+                  strokeWeight: 2,
+                },
+              }}
+            />
+          </GoogleMap>
+        </LoadScript>
       </main>
     </div>
   );
