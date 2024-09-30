@@ -1,0 +1,58 @@
+/* General container */
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  font-family: Arial, sans-serif;
+}
+
+/* Header styling */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #333;
+  color: white;
+  padding: 10px 20px;
+}
+
+.route-select {
+  flex: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.route-select label {
+  margin-right: 10px;
+  color: white;
+}
+
+.logout-button {
+  flex: 1;
+  padding: 8px 16px;
+  background-color: #ff4d4d;
+  color: white;
+  border: none;
+  cursor: pointer;
+  max-width: 100px;
+}
+
+.logout-button:hover {
+  background-color: #ff3333;
+}
+
+/* Dashboard content */
+.dashboard-content {
+  flex: 1;
+  padding: 20px;
+  background-color: #f4f4f4;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+h2 {
+  margin: 0;
+}

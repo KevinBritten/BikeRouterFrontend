@@ -8,7 +8,7 @@ function App() {
   return (
     <div>
       {userId ? (
-        <Dashboard setUserId={setUserId} /> // If userId is set, show the Dashboard
+        <Dashboard setUserId={setUserId} userId={userId} /> // If userId is set, show the Dashboard
       ) : (
         <Login setUserId={setUserId} /> // If userId is null, show the Login form
       )}
