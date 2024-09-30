@@ -1,5 +1,10 @@
 import React, { useEffect, useState, useRef } from "react";
-import { GoogleMap, LoadScript, DrawingManagerF } from "@react-google-maps/api";
+import {
+  GoogleMap,
+  LoadScript,
+  DrawingManagerF,
+  Polyline,
+} from "@react-google-maps/api";
 import "./Dashboard.css";
 
 const mapContainerStyle = {
@@ -16,11 +21,13 @@ function Dashboard({ setUserId, userId }) {
   const [username, setUsername] = useState("");
   const [routeIds, setRouteIds] = useState([]);
   const [routeNames, setRouteNames] = useState([]);
-  const [selectedRoute, setSelectedRoute] = useState("");
+  const [selectedRouteId, setSelectedRouteId] = useState("");
   const [isDrawing, setIsDrawing] = useState(false);
   const [route, setRoute] = useState({});
   const [routeName, setRouteName] = useState("");
-  const drawingManagerRef = useRef(null); // Use a ref to store the DrawingManager
+  const [currentPolyline, setCurrentPolyline] = useState(null);
+  const drawingManagerRef = useRef(null);
+  const mapRef = useRef(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -49,8 +56,47 @@ function Dashboard({ setUserId, userId }) {
     setUserId(null); // Clear userId to simulate logout
   };
 
-  const handleRouteChange = (event) => {
-    setSelectedRoute(event.target.value);
+  const handleRouteChange = async (event) => {
+    setSelectedRouteId(event.target.value);
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/routes/getRoute?routeId=${event.target.value}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Route data received:", data);
+        setRoute(data.route);
+
+        // Clear current polyline if it exists
+        if (currentPolyline) {
+          currentPolyline.setMap(null); // Removes the current polyline from the map
+        }
+
+        // Draw the new polyline
+        const newPolyline = new window.google.maps.Polyline({
+          path: data.route.path, // Assuming route.path is an array of lat/lng objects
+          geodesic: true,
+          strokeColor: "#FF0000",
+          strokeOpacity: 1.0,
+          strokeWeight: 2,
+        });
+
+        // Set the polyline on the map and update the state
+        newPolyline.setMap(mapRef.current);
+        setCurrentPolyline(newPolyline); // Save the new polyline reference
+      } else {
+        console.error("Route not found");
+      }
+    } catch (error) {
+      console.error("Error fetching route:", error);
+    }
   };
 
   const handleSave = async () => {
@@ -109,7 +155,10 @@ function Dashboard({ setUserId, userId }) {
 
   const handleLoad = (drawingManager) => {
     drawingManagerRef.current = drawingManager; // Store the DrawingManager instance when loaded
-    console.log(drawingManager);
+  };
+
+  const onMapLoad = (map) => {
+    mapRef.current = map; // Store the map instance
   };
 
   return (
@@ -124,12 +173,10 @@ function Dashboard({ setUserId, userId }) {
           <label htmlFor="routes">Select Route:</label>
           <select
             id="routes"
-            value={selectedRoute}
+            value={selectedRouteId}
             onChange={handleRouteChange}
           >
-            <option value="" disabled>
-              -- Select a route --
-            </option>
+            <option value="">-- Select a route --</option>
             {routeNames.map((routeName, index) => (
               <option key={index} value={routeIds[index]}>
                 {routeName}
@@ -151,6 +198,13 @@ function Dashboard({ setUserId, userId }) {
             {isDrawing ? "Stop" : "Start"} Drawing
           </button>
           <button onClick={handleSave}>Save Route</button>
+          <button
+            onClick={() => {
+              console.log(route);
+            }}
+          >
+            Save Roe
+          </button>
           <input
             type="text"
             value={routeName}
@@ -165,6 +219,7 @@ function Dashboard({ setUserId, userId }) {
             mapContainerStyle={mapContainerStyle}
             center={center}
             zoom={12}
+            onLoad={onMapLoad}
           >
             <DrawingManagerF
               onLoad={handleLoad} // Store the DrawingManager instance
