@@ -1,10 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import {
-  GoogleMap,
-  LoadScript,
-  DrawingManagerF,
-  Polyline,
-} from "@react-google-maps/api";
+import { GoogleMap, LoadScript, DrawingManagerF } from "@react-google-maps/api";
 import "./Dashboard.css";
 
 const mapContainerStyle = {
@@ -23,6 +18,8 @@ function Dashboard({ setUserId, userId }) {
   const [routeNames, setRouteNames] = useState([]);
   const [selectedRoute, setSelectedRoute] = useState("");
   const [isDrawing, setIsDrawing] = useState(false);
+  const [route, setRoute] = useState({});
+  const [routeName, setRouteName] = useState("");
   const drawingManagerRef = useRef(null); // Use a ref to store the DrawingManager
 
   useEffect(() => {
@@ -56,10 +53,58 @@ function Dashboard({ setUserId, userId }) {
     setSelectedRoute(event.target.value);
   };
 
+  const handleSave = async () => {
+    try {
+      if (!route) {
+        console.error("No route to save.");
+        return;
+      }
+
+      const routeData = {
+        userId,
+        route,
+      };
+
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/routes/saveRoute`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(routeData),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Route saved successfully:", data);
+      } else {
+        const errorData = await response.json();
+        console.error("Error saving route:", errorData);
+      }
+    } catch (error) {
+      console.error("Error while saving the route:", error);
+    }
+  };
+
   const onPolylineComplete = (polyline) => {
-    const path = polyline.getPath().getArray();
-    console.log("Polyline complete:", path);
-    // You can do something with the drawn route here
+    // Get the array of LatLng objects from the polyline path
+    const pathArray = polyline
+      .getPath()
+      .getArray()
+      .map((latLng) => ({
+        lat: latLng.lat(),
+        lng: latLng.lng(),
+      }));
+
+    // Create a polyline object that contains the path and additional properties
+    const polylineData = {
+      path: pathArray, // Array of lat/lng coordinates
+      name: routeName,
+    };
+
+    setRoute(polylineData);
   };
 
   const handleLoad = (drawingManager) => {
@@ -105,6 +150,12 @@ function Dashboard({ setUserId, userId }) {
           >
             {isDrawing ? "Stop" : "Start"} Drawing
           </button>
+          <button onClick={handleSave}>Save Route</button>
+          <input
+            type="text"
+            value={routeName}
+            onChange={(e) => setRouteName(e.target.value)}
+          />
         </div>
         <LoadScript
           googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}

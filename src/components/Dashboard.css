@@ -66,6 +66,7 @@
   border: none;
   cursor: pointer;
   max-width: 200px;
+  margin: 20px;
 }
 
 .dashboard-button-container > button.is-drawing {
