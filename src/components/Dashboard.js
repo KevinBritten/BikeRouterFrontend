@@ -13,8 +13,8 @@ const mapContainerStyle = {
 };
 
 const center = {
-  lat: 43.6532, // Example latitude (Toronto)
-  lng: -79.3832, // Example longitude (Toronto)
+  lat: 45.5019,
+  lng: -73.5674,
 };
 
 function Dashboard({ setUserId, userId }) {
@@ -112,7 +112,7 @@ function Dashboard({ setUserId, userId }) {
       };
 
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/routes/saveRoute`,
+        `${process.env.REACT_APP_API_URL}/routes/addRoute`,
         {
           method: "POST",
           headers: {
@@ -198,13 +198,7 @@ function Dashboard({ setUserId, userId }) {
             {isDrawing ? "Stop" : "Start"} Drawing
           </button>
           <button onClick={handleSave}>Save Route</button>
-          <button
-            onClick={() => {
-              console.log(route);
-            }}
-          >
-            Save Roe
-          </button>
+
           <input
             type="text"
             value={routeName}
