@@ -217,7 +217,7 @@ function Dashboard({ setUserId, userId }) {
           >
             <DrawingManagerF
               onLoad={handleLoad} // Store the DrawingManager instance
-              drawingMode={!isDrawing ? "polyline" : null} // Use a string for drawingMode directly
+              drawingMode={isDrawing ? "polyline" : null} // Use a string for drawingMode directly
               onPolylineComplete={onPolylineComplete}
               options={{
                 drawingControl: true,
