@@ -144,17 +144,27 @@ function Dashboard({ setUserId, userId }) {
         lng: latLng.lng(),
       }));
 
-    // Create a polyline object that contains the path and additional properties
-    const polylineData = {
-      path: pathArray, // Array of lat/lng coordinates
-      name: routeName,
-    };
-
-    setRoute(polylineData);
+    setRoute((oldRoute) => {
+      return {
+        ...oldRoute,
+        path: pathArray,
+      };
+    });
   };
 
   const handleLoad = (drawingManager) => {
     drawingManagerRef.current = drawingManager; // Store the DrawingManager instance when loaded
+  };
+
+  const handleNameChange = (e) => {
+    const newName = e.target.value;
+    setRouteName(newName);
+    setRoute((oldRoute) => {
+      return {
+        ...oldRoute,
+        name: newName,
+      };
+    });
   };
 
   const onMapLoad = (map) => {
@@ -199,11 +209,7 @@ function Dashboard({ setUserId, userId }) {
           </button>
           <button onClick={handleSave}>Save Route</button>
 
-          <input
-            type="text"
-            value={routeName}
-            onChange={(e) => setRouteName(e.target.value)}
-          />
+          <input type="text" value={routeName} onChange={handleNameChange} />
         </div>
         <LoadScript
           googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}
