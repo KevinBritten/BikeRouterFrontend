@@ -32,9 +32,12 @@ function Dashboard({ setUserId, userId }) {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await fetch(
-          `${process.env.REACT_APP_API_URL}/user?userId=${userId}`
-        );
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/user`, {
+          method: "POST",
+          body: new URLSearchParams({
+            userId,
+          }),
+        });
         const data = await response.json();
 
         if (response.ok) {
