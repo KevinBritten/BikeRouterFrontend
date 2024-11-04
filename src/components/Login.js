@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./Login.css";
 
 function Login({ setUserId }) {
@@ -10,6 +10,30 @@ function Login({ setUserId }) {
   const [signupPassword, setSignupPassword] = useState("");
   const [signupSuccess, setSignupSuccess] = useState(null);
 
+  // Function to check for existing session on page load
+  useEffect(() => {
+    const checkUserSession = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.REACT_APP_API_URL}/getUserIdByToken`,
+          {
+            method: "GET",
+            credentials: "include", // Include credentials to send cookies
+          }
+        );
+
+        if (response.ok) {
+          const userId = await response.text(); // Assume the API returns userId as plain text
+          setUserId(userId); // Set userId if a valid user session is found
+        }
+      } catch (error) {
+        console.error("Error checking session:", error);
+      }
+    };
+
+    checkUserSession(); // Call the function on component mount
+  }, [setUserId]); // Add setUserId as a dependency
+
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
 
@@ -19,6 +43,7 @@ function Login({ setUserId }) {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
         },
+        credentials: "include",
         body: new URLSearchParams({
           username: username,
           password: password,
