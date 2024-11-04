@@ -52,8 +52,24 @@ function Dashboard({ setUserId, userId }) {
     fetchUserData();
   }, [userId]);
 
-  const handleLogout = () => {
-    setUserId(null); // Clear userId to simulate logout
+  const handleLogout = async () => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/logout`, {
+        method: "POST",
+        credentials: "include", // Include credentials to send the cookie
+        body: new URLSearchParams({
+          userId,
+        }),
+      });
+
+      if (response.ok) {
+        setUserId(null); // Clear userId if logout was successful
+      } else {
+        console.error("Logout failed:", await response.text()); // Log any errors
+      }
+    } catch (error) {
+      console.error("Network error during logout:", error);
+    }
   };
 
   const handleRouteChange = async (event) => {
