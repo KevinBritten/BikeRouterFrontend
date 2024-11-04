@@ -97,7 +97,9 @@ function Dashboard({ setUserId, userId }) {
 
         // Draw the new polyline
         const newPolyline = new window.google.maps.Polyline({
-          path: data.route.path, // Assuming route.path is an array of lat/lng objects
+          path: data.route.path.coordinates.map((c) => {
+            return { lat: c[0], lng: c[1] };
+          }), // Assuming route.path is an array of lat/lng objects
           geodesic: true,
           strokeColor: "#FF0000",
           strokeOpacity: 1.0,
@@ -124,7 +126,13 @@ function Dashboard({ setUserId, userId }) {
 
       const routeData = {
         userId,
-        route,
+        route: {
+          name: route.name,
+          path: {
+            type: "LineString",
+            coordinates: route.path.map((p) => [p.lat, p.lng]),
+          },
+        },
       };
 
       const response = await fetch(
