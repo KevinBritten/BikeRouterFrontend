@@ -26,6 +26,8 @@ function Dashboard({ setUserId, userId }) {
   const [route, setRoute] = useState({});
   const [routeName, setRouteName] = useState("");
   const [currentPolyline, setCurrentPolyline] = useState(null);
+  const [polylines, setPolylines] = useState([]);
+
   const drawingManagerRef = useRef(null);
   const mapRef = useRef(null);
 
@@ -133,7 +135,7 @@ function Dashboard({ setUserId, userId }) {
           name: route.name,
           path: {
             type: "LineString",
-            coordinates: route.path.map((p) => [p.lat, p.lng]),
+            coordinates: route.path.map((p) => [p.lng, p.lat]),
           },
         },
       };
@@ -179,6 +181,99 @@ function Dashboard({ setUserId, userId }) {
     });
   };
 
+  const handleRectangleComplete = (rectangle) => {
+    polylines.forEach((polyline) => polyline.setMap(null));
+    setPolylines([]); // Reset polylines state
+    const bounds = rectangle.getBounds();
+    const ne = bounds.getNorthEast(); // North-east corner
+    const sw = bounds.getSouthWest(); // South-west corner
+    const nw = { lat: ne.lat(), lng: sw.lng() }; // NW shares latitude with NE, longitude with SW
+    const se = { lat: sw.lat(), lng: ne.lng() }; // SE shares latitude with SW, longitude with NE
+
+    const soapRequest = `<?xml version="1.0" encoding="UTF-8"?>
+      <soap12:Envelope xmlns:soap12="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tns="http://bikeRouterApi/">
+        <soap12:Body>
+          <tns:SearchArea>
+            <lat1>${ne.lat()}</lat1>
+            <lng1>${ne.lng()}</lng1>
+            <lat2>${nw.lat}</lat2>
+            <lng2>${nw.lng}</lng2>
+            <lat3>${sw.lat()}</lat3>
+            <lng3>${sw.lng()}</lng3>
+            <lat4>${se.lat}</lat4>
+            <lng4>${se.lng}</lng4>
+          </tns:SearchArea>
+        </soap12:Body>
+      </soap12:Envelope>`;
+
+    fetch("http://localhost:8080/BikeRouterApi/ws/searchArea", {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/xml",
+      },
+      body: soapRequest,
+    })
+      .then((response) => response.text())
+      .then((responseText) => {
+        console.log("SOAP Response:", responseText);
+
+        // Parse the XML response
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(responseText, "text/xml");
+
+        // Extract route information and draw each as a polyline
+        const routes = xmlDoc.querySelectorAll("routes");
+        routes.forEach((route) => {
+          const id = route.querySelector("id").textContent;
+          const name = route.querySelector("name").textContent;
+          const coordinates = route.querySelectorAll("coordinates");
+
+          console.log("Route ID:", id);
+          console.log("Route Name:", name);
+          console.log("Coordinates:");
+          coordinates.forEach((coord) => {
+            const items = coord.querySelectorAll("item");
+            items.forEach((item) => {
+              console.log(item.textContent); // Each coordinate value
+            });
+          });
+        });
+
+        const newPolylines = Array.from(routes).map((route) => {
+          const coordinates = Array.from(
+            route.querySelectorAll("coordinates")
+          ).map((item) => {
+            console.log("sef");
+            console.log(item.firstChild.innerHTML);
+            console.log(item.lastChild.innerHTML);
+
+            return {
+              lat: parseFloat(item.lastChild.innerHTML),
+              lng: parseFloat(item.firstChild.innerHTML),
+            }; // Ensure latLng order matches your data
+          });
+
+          const polyline = new window.google.maps.Polyline({
+            path: coordinates,
+            geodesic: true,
+            strokeColor: "#FF0000",
+            strokeOpacity: 1.0,
+            strokeWeight: 2,
+          });
+          polyline.setMap(mapRef.current); // Draw polyline on map
+          return polyline;
+        });
+
+        // Save the new polylines to the state for future reference
+        setPolylines(newPolylines);
+      })
+      .catch((error) => {
+        console.error("Error in SOAP request:", error);
+      });
+
+    // Optionally remove the rectangle after drawing
+    rectangle.setMap(null);
+  };
   const handleLoad = (drawingManager) => {
     drawingManagerRef.current = drawingManager; // Store the DrawingManager instance when loaded
   };
@@ -252,14 +347,23 @@ function Dashboard({ setUserId, userId }) {
               onLoad={handleLoad} // Store the DrawingManager instance
               drawingMode={isDrawing ? "polyline" : null} // Use a string for drawingMode directly
               onPolylineComplete={onPolylineComplete}
+              onRectangleComplete={handleRectangleComplete}
               options={{
                 drawingControl: true,
                 drawingControlOptions: {
-                  drawingModes: ["polyline"], // Enable only polyline drawing
+                  drawingModes: ["polyline", "rectangle"], // Enable only polyline drawing
                 },
                 polylineOptions: {
                   strokeColor: "#FF0000",
                   strokeWeight: 2,
+                },
+                rectangleOptions: {
+                  strokeColor: "#FF0000",
+                  strokeWeight: 2,
+                  fillColor: "#FF0000",
+                  fillOpacity: 0.2,
+                  editable: true,
+                  draggable: true,
                 },
               }}
             />
