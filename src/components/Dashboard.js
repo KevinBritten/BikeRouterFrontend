@@ -191,7 +191,7 @@ function Dashboard({ setUserId, userId }) {
     const se = { lat: sw.lat(), lng: ne.lng() }; // SE shares latitude with SW, longitude with NE
 
     const soapRequest = `<?xml version="1.0" encoding="UTF-8"?>
-      <soap12:Envelope xmlns:soap12="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tns="http://bikeRouterApi/">
+      <soap12:Envelope xmlns:soap12="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tns="http://resource.bikeRouterApi/">
         <soap12:Body>
           <tns:SearchArea>
             <lat1>${ne.lat()}</lat1>
